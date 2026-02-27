@@ -1,0 +1,28 @@
+# Credentials
+openrc*.sh
+clouds.yml
+clouds.yaml
+*.pem
+*.key
+id_rsa*
+
+# Terraform/Tofu state
+*.tfstate
+*.tfstate.backup
+.terraform/
+.tofu/
+terraform/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Ansible
+*.retry
+.ansible/
+inventory.ini
+
+# Divers
+.env
