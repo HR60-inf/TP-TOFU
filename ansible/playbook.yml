@@ -6,19 +6,48 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
-    
+
     - name: Install Docker
       apt:
         name: docker.io
         state: present
-    
-    - name: Start Docker
+
+    - name: Start and enable Docker
       service:
         name: docker
         state: started
         enabled: yes
-    
-    - name: Install Docker Compose
-      apt:
-        name: docker-compose
+
+    - name: Add ubuntu to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Initialiser Docker Swarm
+      community.docker.docker_swarm:
         state: present
+
+    - name: Créer le réseau overlay traefik-net
+      community.docker.docker_network:
+        name: traefik-net
+        driver: overlay
+        attachable: yes
+
+    - name: Copier la stack Traefik sur la VM
+      copy:
+        src: ../docker/traefik-stack.yml
+        dest: /home/ubuntu/traefik-stack.yml
+
+    - name: Déployer la stack Traefik
+      shell: docker stack deploy -c /home/ubuntu/traefik-stack.yml traefik
+      become_user: ubuntu
+
+    - name: Générer le fichier de stack whoami avec l IP dynamique
+      ansible.builtin.template:
+        src: ./templates/app-whoami-stack.yml.j2
+        dest: /home/ubuntu/app-whoami-stack.yml
+
+    - name: Déployer la stack whoami
+      shell: docker stack deploy -c /home/ubuntu/app-whoami-stack.yml whoami
+      become_user: ubuntu
