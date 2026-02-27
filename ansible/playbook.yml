@@ -41,7 +41,7 @@
 
     - name: Déployer la stack Traefik
       shell: docker stack deploy -c /home/ubuntu/traefik-stack.yml traefik
-      become_user: ubuntu
+      become: yes
 
     - name: Générer le fichier de stack whoami avec l IP dynamique
       ansible.builtin.template:
@@ -50,4 +50,4 @@
 
     - name: Déployer la stack whoami
       shell: docker stack deploy -c /home/ubuntu/app-whoami-stack.yml whoami
-      become_user: ubuntu
+      become: yes
