@@ -26,7 +26,6 @@ jobs:
           mkdir -p $HOME/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
           chmod 600 $HOME/.ssh/id_rsa
-          ssh-keyscan -H $(cd tofu && tofu output -raw instance_ip) >> $HOME/.ssh/known_hosts
       - name: Setup OpenStack credentials
         run: |
           mkdir -p ~/.config/openstack
