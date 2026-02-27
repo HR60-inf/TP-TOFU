@@ -1,36 +1,27 @@
 name: Deploy Infrastructure
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y netcat-openbsd python3-pip
           pip3 install ansible
-
       - name: Install OpenTofu
         run: |
-          curl -Lo tofu.tar.gz https://github.com/opentofu/opentofu/releases/download/v1.6.0/tofu_1.6.0_linux_amd64.tar.gz
-          tar -xzf tofu.tar.gz
-          sudo mv tofu /usr/local/bin/
-
+          curl -fsSL https://get.opentofu.org/install-opentofu.sh | sudo bash -s -- --install-method deb
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
       - name: Setup OpenStack credentials
         run: |
           mkdir -p ~/.config/openstack
@@ -48,7 +39,6 @@ jobs:
               interface: public
               identity_api_version: 3
           YAML
-
       - name: Tofu Init and Apply
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -58,14 +48,12 @@ jobs:
           tofu init
           tofu apply -auto-approve
           echo "NODE_IP=$(tofu output -raw instance_ip)" >> $GITHUB_ENV
-
       - name: Wait for SSH
         run: |
           echo "Attente du demarrage de la VM..."
           until nc -zvw5 $NODE_IP 22; do
             sleep 5
           done
-
       - name: Run Ansible
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
