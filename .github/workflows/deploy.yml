@@ -1,4 +1,4 @@
-name: Deploy Infrastructure
+kname: Deploy Infrastructure
 on:
   push:
     branches:
@@ -6,6 +6,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: "true"
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -40,10 +44,6 @@ jobs:
               identity_api_version: 3
           YAML
       - name: Tofu Init and Apply
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_EC2_METADATA_DISABLED: "true"
         run: |
           cd tofu
           tofu init
