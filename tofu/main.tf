@@ -25,7 +25,7 @@ provider "openstack" {
 resource "openstack_compute_instance_v2" "vm_swarm" {
   count       = 2
   name        = "vm-iac-tp-${count.index}"
-  image_name  = "Ubuntu 22.04"
+  image_name  = "Ubuntu 24.04"
   flavor_name = "d2-2"
   key_pair    = "ma-cle-wsl"
 

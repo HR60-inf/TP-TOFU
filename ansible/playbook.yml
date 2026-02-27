@@ -108,7 +108,7 @@
     - name: Configurer les exports NFS
       lineinfile:
         path: /etc/exports
-        line: "/var/nfs/etherpad_data {{ hostvars[groups['workers'][0]]['ansible_host'] }}(rw,sync,no_subtree_check,no_root_squash)"
+        line: "/var/nfs/etherpad_data {{ hostvars[groups['workers'][0]]['inventory_hostname'] }}(rw,sync,no_subtree_check,no_root_squash)"
         create: yes
 
     - name: Redemarrer NFS
