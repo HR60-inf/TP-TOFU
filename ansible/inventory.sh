@@ -9,7 +9,7 @@ cat << ENDJSON
     "hosts": ["$IP"],
     "vars": {
       "ansible_user": "ubuntu",
-      "ansible_ssh_private_key_file": "/root/.ssh/id_rsa",
+      "ansible_ssh_private_key_file": "~/.ssh/id_rsa",
       "ansible_python_interpreter": "/usr/bin/python3"
     }
   },
