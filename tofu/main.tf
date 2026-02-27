@@ -35,12 +35,11 @@ resource "openstack_compute_instance_v2" "vm_swarm" {
   }
 
   security_groups = ["default"]
-}
 
- lifecycle {
+  lifecycle {
     ignore_changes = [image_name]
   }
-
+}
 
 output "instances_ips" {
   value = openstack_compute_instance_v2.vm_swarm[*].access_ip_v4
