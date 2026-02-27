@@ -22,8 +22,9 @@ provider "openstack" {
   cloud = "openstack"
 }
 
-resource "openstack_compute_instance_v2" "server" {
-  name        = "tp-server"
+resource "openstack_compute_instance_v2" "vm_swarm" {
+  count       = 2
+  name        = "vm-iac-tp-${count.index}"
   image_name  = "Ubuntu 22.04"
   flavor_name = "d2-2"
   key_pair    = "ma-cle-wsl"
@@ -36,6 +37,14 @@ resource "openstack_compute_instance_v2" "server" {
   security_groups = ["default"]
 }
 
-output "instance_ip" {
-  value = openstack_compute_instance_v2.server.access_ip_v4
+output "instances_ips" {
+  value = openstack_compute_instance_v2.vm_swarm[*].access_ip_v4
+}
+
+output "manager_ip" {
+  value = openstack_compute_instance_v2.vm_swarm[0].access_ip_v4
+}
+
+output "worker_ip" {
+  value = openstack_compute_instance_v2.vm_swarm[1].access_ip_v4
 }

@@ -1,5 +1,8 @@
 ---
-- hosts: all
+# ==============================
+# Etape 1 : Base sur tous les noeuds
+# ==============================
+- hosts: managers:workers
   become: yes
   tasks:
     - name: Update apt cache
@@ -24,30 +27,58 @@
         groups: docker
         append: yes
 
-    - name: Initialiser Docker Swarm
+# ==============================
+# Etape 2 : Initialiser le Manager
+# ==============================
+- hosts: managers
+  become: yes
+  tasks:
+    - name: Initialiser Docker Swarm sur le manager
       community.docker.docker_swarm:
         state: present
 
-    - name: Créer le réseau overlay traefik-net
+    - name: Recuperer le join token worker
+      shell: docker swarm join-token -q worker
+      register: worker_token
+
+    - name: Sauvegarder le token
+      set_fact:
+        swarm_worker_token: "{{ worker_token.stdout }}"
+        swarm_manager_ip: "{{ ansible_host }}"
+
+    - name: Creer le reseau overlay traefik-public
       community.docker.docker_network:
-        name: traefik-net
+        name: traefik-public
         driver: overlay
         attachable: yes
 
-    - name: Copier la stack Traefik sur la VM
+    - name: Copier la stack Traefik sur le manager
       copy:
         src: ../docker/traefik-stack.yml
         dest: /home/ubuntu/traefik-stack.yml
 
-    - name: Déployer la stack Traefik
+    - name: Deployer Traefik
       shell: docker stack deploy -c /home/ubuntu/traefik-stack.yml traefik
       become: yes
 
-    - name: Générer le fichier de stack whoami avec l IP dynamique
+    - name: Generer la stack whoami avec IP dynamique
       ansible.builtin.template:
         src: ./templates/app-whoami-stack.yml.j2
         dest: /home/ubuntu/app-whoami-stack.yml
 
-    - name: Déployer la stack whoami
+    - name: Deployer whoami
       shell: docker stack deploy -c /home/ubuntu/app-whoami-stack.yml whoami
       become: yes
+
+# ==============================
+# Etape 3 : Worker rejoint le cluster
+# ==============================
+- hosts: workers
+  become: yes
+  tasks:
+    - name: Faire rejoindre le worker au cluster Swarm
+      community.docker.docker_swarm:
+        state: join
+        join_token: "{{ hostvars[groups['managers'][0]]['swarm_worker_token'] }}"
+        remote_addrs:
+          - "{{ hostvars[groups['managers'][0]]['swarm_manager_ip'] }}:2377"
