@@ -27,6 +27,11 @@
         groups: docker
         append: yes
 
+    - name: Installer le SDK Python Docker
+      apt:
+        name: python3-docker
+        state: present
+
 # ==============================
 # Etape 2 : Initialiser le Manager
 # ==============================
