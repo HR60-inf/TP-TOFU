@@ -13,19 +13,23 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y netcat-openbsd python3-pip
           pip3 install ansible
+
       - name: Install OpenTofu
         run: |
           curl -fsSL https://get.opentofu.org/install-opentofu.sh | sudo bash -s -- --install-method deb
+
       - name: Setup SSH key
         run: |
           mkdir -p $HOME/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/id_rsa
           chmod 600 $HOME/.ssh/id_rsa
+
       - name: Setup OpenStack credentials
         run: |
           mkdir -p ~/.config/openstack
@@ -43,19 +47,27 @@ jobs:
               interface: public
               identity_api_version: 3
           YAML
+
       - name: Tofu Init and Apply
         timeout-minutes: 15
         run: |
           cd tofu
           tofu init -upgrade
           tofu apply -auto-approve
-          echo "NODE_IP=$(tofu output -raw instance_ip)" >> $GITHUB_ENV
+          echo "MANAGER_IP=$(tofu output -raw manager_ip)" >> $GITHUB_ENV
+          echo "WORKER_IP=$(tofu output -raw worker_ip)" >> $GITHUB_ENV
+
       - name: Wait for SSH
         run: |
-          echo "Attente du demarrage de la VM..."
-          until nc -zvw5 $NODE_IP 22; do
+          echo "Attente manager ${{ env.MANAGER_IP }}..."
+          until nc -zvw5 ${{ env.MANAGER_IP }} 22; do
             sleep 5
           done
+          echo "Attente worker ${{ env.WORKER_IP }}..."
+          until nc -zvw5 ${{ env.WORKER_IP }} 22; do
+            sleep 5
+          done
+
       - name: Run Ansible
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
