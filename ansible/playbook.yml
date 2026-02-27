@@ -87,3 +87,51 @@
         join_token: "{{ hostvars[groups['managers'][0]]['swarm_worker_token'] }}"
         remote_addrs:
           - "{{ hostvars[groups['managers'][0]]['swarm_manager_ip'] }}:2377"
+
+# ==============================
+# Etape 4 : NFS Serveur sur le Manager
+# ==============================
+- hosts: managers
+  become: yes
+  tasks:
+    - name: Installer nfs-kernel-server
+      apt:
+        name: nfs-kernel-server
+        state: present
+
+    - name: Creer le dossier NFS
+      file:
+        path: /var/nfs/etherpad_data
+        state: directory
+        mode: '0777'
+
+    - name: Configurer les exports NFS
+      lineinfile:
+        path: /etc/exports
+        line: "/var/nfs/etherpad_data {{ hostvars[groups['workers'][0]]['ansible_host'] }}(rw,sync,no_subtree_check,no_root_squash)"
+        create: yes
+
+    - name: Redemarrer NFS
+      service:
+        name: nfs-kernel-server
+        state: restarted
+
+    - name: Generer et deployer la stack Etherpad
+      ansible.builtin.template:
+        src: ./templates/etherpad-stack.yml.j2
+        dest: /home/ubuntu/etherpad-stack.yml
+
+    - name: Deployer Etherpad
+      shell: docker stack deploy -c /home/ubuntu/etherpad-stack.yml etherpad
+      become: yes
+
+# ==============================
+# Etape 5 : NFS Client sur les Workers
+# ==============================
+- hosts: workers
+  become: yes
+  tasks:
+    - name: Installer nfs-common
+      apt:
+        name: nfs-common
+        state: present
