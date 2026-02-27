@@ -44,9 +44,10 @@ jobs:
               identity_api_version: 3
           YAML
       - name: Tofu Init and Apply
+        timeout-minutes: 15
         run: |
           cd tofu
-          tofu init
+          tofu init -upgrade
           tofu apply -auto-approve
           echo "NODE_IP=$(tofu output -raw instance_ip)" >> $GITHUB_ENV
       - name: Wait for SSH
