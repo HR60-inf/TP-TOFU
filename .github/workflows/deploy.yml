@@ -1,4 +1,4 @@
-kname: Deploy Infrastructure
+name: Deploy Infrastructure
 on:
   push:
     branches:
